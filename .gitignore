@@ -3,3 +3,4 @@
 buddy-api
 **/*.cer
 /tmp
+.DS_Store

@@ -9,10 +9,13 @@ else
 fi
 
 # Check if required environment variables are set
-if [[ -z "$SME_SSH_USER" || -z "$SME_SSH_HOST" || -z "$SME_SSH_PASSWORD" ]]; then
+if [ -z "$SME_SSH_USER" ] || [ -z "$SME_SSH_HOST" ] || [ -z "$SME_SSH_PASSWORD" ]; then
     echo "Missing required environment variables. Ensure SME_SSH_USER, SME_SSH_HOST, and SME_SSH_PASSWORD are set."
     exit 1
 fi
+
+echo "Building and deploying..."
+
 
 # Commands for deployment
 # Deployment -- START --
@@ -27,7 +30,7 @@ sshpass -p "$SME_SSH_PASSWORD" ssh "$SME_SSH_USER@$SME_SSH_HOST" "sudo systemctl
 # Deleting 'sme-backend' binary file.
 # Cleanup: Delete the local 'sme-backend' file if the deployment was successful
 if [ $? -eq 0 ]; then
-	echo "Deployment completed successfully."
+    echo "Deployment completed successfully."
     echo "Cleaning up local 'sme-backend' file..."
     rm -f sme-backend
     if [ $? -eq 0 ]; then
