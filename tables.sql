@@ -205,4 +205,14 @@ begin;
         unique(created_by)
     );
 
+    create table if not exists commissions (
+        id uuid primary key not null default uuid_generate_v4(),
+        created_at timestamp with time zone default current_timestamp not null,
+        updated_at timestamp with time zone default current_timestamp not null,
+        created_by uuid not null references users (id) on delete cascade,
+        commission_percentage float not null,
+        gst_percentage float not null,
+        unique(created_by)
+    );
+
 commit;

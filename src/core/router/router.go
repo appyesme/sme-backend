@@ -11,6 +11,7 @@ import (
 	appointments_handler "sme-backend/src/modules/appointments"
 	auth_handler "sme-backend/src/modules/auth"
 	bank_accounts_handler "sme-backend/src/modules/bank_accounts"
+	commissions_handler "sme-backend/src/modules/commissons"
 	"sme-backend/src/modules/notifications"
 	"sme-backend/src/modules/payments"
 	posts_handler "sme-backend/src/modules/posts"
@@ -53,6 +54,10 @@ func SetupRoutes(app *chi.Mux) {
 
 		router.With(middlewares.AdminProtected).Get("/analytics/joinings", admins_handler.GetWeeklyJoinedUsersCount)
 		router.With(middlewares.AdminProtected).Get("/analytics/earnings", admins_handler.GetDailyWiseEarnings)
+
+		// Commissons
+		router.With(middlewares.AdminProtected).Get("/commissons", commissions_handler.GetCommissonsDetails)
+		router.With(middlewares.AdminProtected).Post("/commissons", commissions_handler.UpdateCommissonsDetails)
 	})
 
 	app.With(middlewares.PartiallyProtected).Route("/auth", func(router chi.Router) {

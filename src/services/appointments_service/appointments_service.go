@@ -23,7 +23,10 @@ func GetAppointmentCharge(tx *gorm.DB, service_id string, home_service_needed *b
 		return totalAmount, err
 	}
 
-	gstPercentage := 18.0
+	var commission model.Commission
+	if err := tx.Find(&commission).Error; err != nil {
+		return totalAmount, err
+	}
 
 	if home_service_needed != nil && *home_service_needed {
 		totalAmount = service.Charge + service.AdditionalCharge
@@ -31,8 +34,10 @@ func GetAppointmentCharge(tx *gorm.DB, service_id string, home_service_needed *b
 		totalAmount = service.Charge
 	}
 
-	gstOnTotalAmount := (totalAmount * gstPercentage) / 100
-	totalAmount = totalAmount + gstOnTotalAmount
+	commissionPercentage := (totalAmount * commission.CommissionPercentage) / 100
+	cstPercentage := (totalAmount * commission.GstPercentage) / 100
+
+	totalAmount = totalAmount + commissionPercentage + cstPercentage
 	return totalAmount, nil
 }
 
