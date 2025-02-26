@@ -16,7 +16,6 @@ fi
 
 echo "Building and deploying..."
 
-
 # Commands for deployment
 # Deployment -- START --
 sshpass -p "$SME_SSH_PASSWORD" ssh "$SME_SSH_USER@$SME_SSH_HOST" "mkdir -p /root/apps/sme/sme-new"
