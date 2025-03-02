@@ -32,7 +32,7 @@ func GetAppointmentPrice(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	resp := map[string]interface{}{"amount": total_amount}
+	resp := map[string]any{"amount": total_amount}
 	helpers.HandleSuccess(response, http.StatusOK, "Service total price fetched", resp)
 }
 
@@ -129,7 +129,7 @@ func MarkAsCompleted(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	appointment := map[string]interface{}{"status": appointment_status.COMPLETED}
+	appointment := map[string]any{"status": appointment_status.COMPLETED}
 	if err := db.Model(model.Appointment{}).Where("id = ?", appointment_id).Updates(&appointment).Error; err != nil {
 		helpers.HandleError(response, http.StatusInternalServerError, "Unable to complete appointment", err)
 		return

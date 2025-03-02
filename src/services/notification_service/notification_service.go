@@ -20,7 +20,7 @@ func GetUserNotificatons(tx *gorm.DB, page, limit int, user_id string, notificat
 }
 
 func MarkAsRead(tx *gorm.DB, noitifiction_id, user_id string) error {
-	notification := map[string]interface{}{"read": true}
+	notification := map[string]any{"read": true}
 	return tx.Model(model.Notification{}).Where("id = ?", noitifiction_id).Updates(&notification).Error
 }
 

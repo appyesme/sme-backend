@@ -25,7 +25,7 @@ func GetUserAppointments(response http.ResponseWriter, request *http.Request) {
 	}
 
 	var appointments []GetUserAppointmentsDto
-	var query_values []interface{}
+	var query_values []any
 	query := `select
 				ap.*,
 				to_jsonb(s.*) as service,
@@ -181,7 +181,7 @@ func GetFavouriteUsers(response http.ResponseWriter, request *http.Request) {
 	db := database.GetRlsContextDB(request)
 	user_id := helpers.GetUserIdFromJwtToken(request)
 
-	var data []map[string]interface{}
+	var data []map[string]any
 	query := `SELECT u.id, u.photo_url, u.name FROM favourite_users fu JOIN users u on u.id = fu.profile_id WHERE fu.created_by = ?`
 	if err := db.Raw(query, user_id).Scan(&data).Error; err != nil {
 		helpers.HandleError(response, http.StatusBadRequest, "Unable to add to favourite", err)

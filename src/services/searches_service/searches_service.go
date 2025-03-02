@@ -5,7 +5,6 @@ import (
 	"sme-backend/src/enums/user_types"
 	"sme-backend/src/services/post_service"
 
-	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -22,10 +21,9 @@ type SearchedServicesDto struct {
 }
 
 type SearchedUsersDto struct {
-	ID         string         `json:"id"`
-	Name       string         `json:"name"`
-	PhotoUrl   string         `json:"photo_url"`
-	Expertises pq.StringArray `json:"expertises"`
+	ID       string `json:"id" gorm:"id"`
+	Name     string `json:"name" gorm:"name"`
+	PhotoUrl string `json:"photo_url" gorm:"photo_url"`
 }
 
 func SearchServices(db *gorm.DB, searched_services *[]SearchedServicesDto, search_query string) error {
@@ -44,13 +42,12 @@ func SearchPosts(db *gorm.DB, searched_posts *[]post_service.GetPostsDto, search
 }
 
 func SearchUsers(db *gorm.DB, searched_users *[]SearchedUsersDto, search_query string) error {
-	query := `SELECT u.id, u.photo_url, u.name, json_agg(u.expertises) as expertises
+	query := `SELECT u.id, u.photo_url, u.name
 	FROM users u LEFT JOIN auth a ON a.id = u.id
-	WHERE a.user_type == $1 AND u.verified AND ( u.name ILIKE $2 OR EXISTS (
-		SELECT 1 FROM unnest(u.expertises) AS expertise WHERE expertise ILIKE $2
-	))
+	WHERE a.user_type = $1 AND u.verified AND (u.name ILIKE $2 OR $2 ILIKE ANY(u.expertises))
 	GROUP BY u.id, u.name
 	LIMIT 20;`
+
 	search_term := fmt.Sprintf("%%%s%%", search_query)
 
 	return db.Raw(query, user_types.ENTREPRENEUR, search_term).Scan(&searched_users).Error

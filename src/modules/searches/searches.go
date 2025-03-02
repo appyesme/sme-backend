@@ -48,6 +48,6 @@ func SearchServicesAndPostsAndUsers(response http.ResponseWriter, request *http.
 	// Wait for both goroutines to finish
 	wg.Wait()
 
-	resp := map[string]interface{}{"services": searched_services /* "posts": searched_posts, */, "users": searched_users}
+	resp := map[string]any{"services": searched_services /* "posts": searched_posts, */, "users": searched_users}
 	helpers.HandleSuccess(response, http.StatusOK, "Searched", resp)
 }

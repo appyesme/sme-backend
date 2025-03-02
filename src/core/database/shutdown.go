@@ -32,8 +32,8 @@ func ConfigureGracefulShutdown(server *http.Server) {
 		}
 
 		// Close database connection
-		if CONTEXT_API_DB != nil {
-			api_db, err := CONTEXT_API_DB.DB()
+		if API_USER_DB != nil {
+			api_db, err := API_USER_DB.DB()
 			if err != nil {
 				log.Printf("Error retrieving database connection: %v", err)
 			} else if err := api_db.Close(); err != nil {

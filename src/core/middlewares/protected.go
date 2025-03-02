@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/jwtauth/v5"
 )
 
+// Middleware for protected routes
 func Protected(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		token := jwtauth.TokenFromHeader(request)
@@ -21,6 +22,7 @@ func Protected(next http.Handler) http.Handler {
 	})
 }
 
+// Middleware for admin-protected routes
 func AdminProtected(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		token := jwtauth.TokenFromHeader(request)
@@ -28,57 +30,82 @@ func AdminProtected(next http.Handler) http.Handler {
 	})
 }
 
+// Middleware that allows both protected and unprotected access
 func PartiallyProtected(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		token := jwtauth.TokenFromHeader(request)
+
+		db := database.API_USER_DB
+		ctx := context.WithValue(request.Context(), context_keys.DB, db)
+
 		if token != "" {
-			jwtVerify(response, request, next, token, false)
+			jwtVerify(response, request, next, token, false) // Handles RLS setup
 		} else {
-			db := database.CONTEXT_API_DB
-			ctx := context.WithValue(request.Context(), context_keys.DB, db)
-			next.ServeHTTP(response, request.WithContext(ctx))
+			next.ServeHTTP(response, request.WithContext(ctx)) // Skip RLS if no token
 		}
 	})
 }
 
+// Validates JWT and applies RLS
 func jwtVerify(response http.ResponseWriter, request *http.Request, next http.Handler, token string, is_admin bool) {
+	if token == "" {
+		helpers.HandleError(response, http.StatusUnauthorized, "Missing token", errors.New("token required"))
+		return
+	}
+
 	tokenAuth := jwtauth.New("HS256", []byte(config.Config("JWT_SECRET")), nil)
+
+	// Verify JWT before extracting claims
+	user_id, err := VerifyJwtTokenExpiration(request, token)
+	if err != nil {
+		helpers.HandleError(response, http.StatusUnauthorized, "Invalid token", err)
+		return
+	}
+
+	// Extract claims after verification
 	payload, err := jwtauth.VerifyToken(tokenAuth, token)
 	if err != nil {
 		helpers.HandleError(response, http.StatusUnauthorized, "Unauthorized", err)
 		return
 	}
 
-	user_id := payload.Subject()
 	user_type, ok := payload.Get(string(context_keys.USER_TYPE))
 	if !ok {
 		helpers.HandleError(response, http.StatusUnauthorized, "Invalid user type", errors.New("missing user type"))
 		return
 	}
 
-	// CHECK if the user is ADMIN
+	// Block access if user is not admin
 	if is_admin && user_type != user_types.ADMIN {
 		helpers.HandleError(response, http.StatusUnauthorized, "Unauthorized", errors.New("unauthorized user"))
 		return
 	}
 
-	// Set Currennt context user's DB
-	db := database.CONTEXT_API_DB
-	database.SetRLS(db, user_id)
+	db := database.API_USER_DB
+
+	// Set RLS for the current user
+	err = database.SetRLS(db, user_id)
+	if err != nil {
+		helpers.HandleError(response, http.StatusInternalServerError, "Internal server error", err)
+		return
+	}
+
+	// Store user details in request context
 	ctx := context.WithValue(request.Context(), context_keys.USER_ID, user_id)
-	ctx = context.WithValue(ctx, context_keys.USER_TYPE, user_type) // Add user_type to context
+	ctx = context.WithValue(ctx, context_keys.USER_TYPE, user_type)
 	ctx = context.WithValue(ctx, context_keys.DB, db)
 
 	next.ServeHTTP(response, request.WithContext(ctx))
 }
 
+// Verifies JWT token expiration
 func VerifyJwtTokenExpiration(request *http.Request, token string) (string, error) {
 	tokenAuth := jwtauth.New("HS256", []byte(config.Config("JWT_SECRET")), nil)
 	payload, err := jwtauth.VerifyToken(tokenAuth, token)
-	var user_id string
+
 	if err != nil {
-		return user_id, err
+		return "", err
 	}
-	user_id = payload.Subject()
-	return user_id, err
+
+	return payload.Subject(), nil
 }

@@ -61,7 +61,7 @@ func AdminSignIn(response http.ResponseWriter, request *http.Request) {
 	}
 
 	success_msg := "OTP has been sent"
-	output := map[string]interface{}{"message": success_msg}
+	output := map[string]any{"message": success_msg}
 	helpers.HandleSuccess(response, http.StatusCreated, success_msg, output)
 }
 
@@ -122,7 +122,7 @@ func SendOTP(response http.ResponseWriter, request *http.Request) {
 	}
 
 	success_msg := "OTP has been sent"
-	output := map[string]interface{}{"message": success_msg}
+	output := map[string]any{"message": success_msg}
 	helpers.HandleSuccess(response, http.StatusCreated, success_msg, output)
 }
 
@@ -214,7 +214,7 @@ func SignUp(response http.ResponseWriter, request *http.Request) {
 	}
 
 	success_msg := "Account created successfully"
-	output := map[string]interface{}{"id": auth.ID, "token": jwt_token, "message": success_msg}
+	output := map[string]any{"id": auth.ID, "token": jwt_token, "message": success_msg}
 	helpers.HandleSuccess(response, http.StatusCreated, success_msg, output)
 }
 
@@ -265,7 +265,7 @@ func VerifyOTP(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	result := map[string]interface{}{"message": message, "token": jwt_token}
+	result := map[string]any{"message": message, "token": jwt_token}
 	helpers.HandleSuccess(response, http.StatusOK, message, result)
 }
 
@@ -330,7 +330,7 @@ func ResendOtp(response http.ResponseWriter, request *http.Request) {
 	}
 
 	success_msg := "OTP has been sent"
-	output := map[string]interface{}{"message": success_msg}
+	output := map[string]any{"message": success_msg}
 	helpers.HandleSuccess(response, http.StatusCreated, success_msg, output)
 }
 
@@ -361,7 +361,7 @@ func SignInByPass(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	result := map[string]interface{}{"token": token}
+	result := map[string]any{"token": token}
 	helpers.HandleSuccess(response, http.StatusOK, "Signin success", result)
 }
 
@@ -380,6 +380,6 @@ func VerifyJwtTokenExpiration(response http.ResponseWriter, request *http.Reques
 		return
 	}
 
-	result := map[string]interface{}{"token": token, "user_id": user_id}
+	result := map[string]any{"token": token, "user_id": user_id}
 	helpers.HandleSuccess(response, http.StatusOK, "JWT verified", result)
 }

@@ -14,10 +14,10 @@ import (
 )
 
 type Response struct {
-	Status  string      `json:"status"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
-	Error   interface{} `json:"error"`
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Data    any    `json:"data"`
+	Error   any    `json:"error"`
 }
 
 var Validator = validator.New()
@@ -43,7 +43,7 @@ func GetCurrentTime() time.Time {
 	return time.Now().In(location)
 }
 
-func ParseBody(request *http.Request, data interface{}, validate bool) error {
+func ParseBody(request *http.Request, data any, validate bool) error {
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err == nil && validate {
 		return Validator.Struct(data)
@@ -51,14 +51,14 @@ func ParseBody(request *http.Request, data interface{}, validate bool) error {
 	return err
 }
 
-func UnmarshalJSON(data []byte, target interface{}) error {
+func UnmarshalJSON(data []byte, target any) error {
 	if data == nil {
 		return nil
 	}
 	return json.Unmarshal(data, target)
 }
 
-func HandleSuccess(response http.ResponseWriter, statusCode int, message string, data interface{}) {
+func HandleSuccess(response http.ResponseWriter, statusCode int, message string, data any) {
 	payload := Response{Status: "success", Message: message, Data: data, Error: nil}
 
 	response.Header().Set("Content-Type", "application/json")
@@ -115,7 +115,7 @@ func GetQueryArray(request *http.Request, key string) ([]string, error) {
 	}
 	return values, nil
 }
-func ToRawMessage(data interface{}) *json.RawMessage {
+func ToRawMessage(data any) *json.RawMessage {
 	dataJSON, err := json.Marshal(data)
 	if err != nil {
 		return nil

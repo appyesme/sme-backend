@@ -98,7 +98,7 @@ func ApproveOrRejectEntrepreneur(response http.ResponseWriter, request *http.Req
 		return
 	}
 
-	user_verified := map[string]interface{}{"verified": *approval_status}
+	user_verified := map[string]any{"verified": *approval_status}
 	if err := tx.Model(model.User{}).Where("id = ?", joining_requestor_id).Updates(&user_verified).Error; err != nil {
 		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong", err)
 		return
@@ -166,7 +166,7 @@ func GetClearingPaymentDetails(response http.ResponseWriter, request *http.Reque
 
 	total_amount_to_clear = total_amount_to_clear / 100 // Convert to rupee amount
 
-	result := map[string]interface{}{
+	result := map[string]any{
 		"total_amount_to_clear": total_amount_to_clear,
 		"payment_ids":           payment_ids,
 	}
@@ -178,7 +178,7 @@ func MarkAsPaymentCleared(response http.ResponseWriter, request *http.Request) {
 	db := database.GetRlsContextDB(request)
 	entrepreneur_id := helpers.GetQueryParameter(request, "entrepreneur_id")
 
-	var payload_ids []interface{}
+	var payload_ids []any
 	if err := helpers.ParseBody(request, &payload_ids, false); err != nil {
 		helpers.HandleError(response, http.StatusBadRequest, "Provide valid inputs", err)
 		return

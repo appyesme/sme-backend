@@ -1,6 +1,9 @@
 begin;
-
+    -- Ensure timezone is set
     alter database postgres set timezone to 'Asia/Kolkata';
+
+    -- Enable UUID extension (if not already enabled)
+    create extension if not exists "uuid-ossp";
 
     create table if not exists phone_verifications (
         id uuid primary key not null default uuid_generate_v4(),

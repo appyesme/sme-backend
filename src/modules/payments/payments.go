@@ -35,7 +35,7 @@ func VerifyPaymentStatus(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	payment_verification := map[string]interface{}{}
+	payment_verification := map[string]any{}
 
 	if booked_appointment.Status == appointment_status.BOOKED && payment.Status == payment_status.PAID {
 		payment_verification["status"] = payment_status.PAID
