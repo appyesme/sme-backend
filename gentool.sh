@@ -18,7 +18,7 @@ if [ -z "$table_name" ]; then
 fi
 
 # Construct the DSN string
-dsn="user=${DB_USERNAME} password=${DB_PASSWORD} host=${DB_HOST} port=${DB_PORT} dbname=${DB_NAME} sslmode=${SSL_MODE}"
+dsn="user=${DB_USERNAME} password=${DB_PASSWORD} host=${DB_HOST} port=${DB_PORT} dbname=${DB_NAME} sslmode=disable"
 
 # Command to be executed
 command="gentool -db postgres -dsn \"${dsn}\" -onlyModel -fieldNullable -fieldWithTypeTag -tables \"${table_name}\""
