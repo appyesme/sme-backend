@@ -214,10 +214,12 @@ func DeleteService(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	if err := file_upload_service.DeleteFileFromStorage(storage_paths); err != nil {
-		tx.Rollback()
-		helpers.HandleError(response, http.StatusConflict, "Unable to delete a service", err)
-		return
+	if len(storage_paths) > 0 {
+		if err := file_upload_service.DeleteFileFromStorage(storage_paths); err != nil {
+			tx.Rollback()
+			helpers.HandleError(response, http.StatusConflict, "Unable to delete a service", err)
+			return
+		}
 	}
 
 	if err := tx.Clauses(clause.Returning{}).Delete(&service, "id = ?", service_id).Error; err != nil {
