@@ -214,6 +214,10 @@ func SignUp(response http.ResponseWriter, request *http.Request) {
 	}
 
 	success_msg := "Account created successfully"
+	if payload.UserType == user_types.ENTREPRENEUR {
+		success_msg = "Account created and sent for verification."
+	}
+
 	output := map[string]any{"id": auth.ID, "token": jwt_token, "message": success_msg}
 	helpers.HandleSuccess(response, http.StatusCreated, success_msg, output)
 }
