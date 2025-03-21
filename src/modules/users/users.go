@@ -69,7 +69,8 @@ func GetEntrepreneurAppointments(response http.ResponseWriter, request *http.Req
 					appointments ap
 					join services s on s.id = ap.service_id
 					left join payments p on p.appointment_id = ap.id AND ap.status = 'INITIATED'
-				where ap.date = ? AND s.created_by = ?`
+				where ap.date = ? AND s.created_by = ?
+				group by ap.id`
 
 	if err := db.Raw(query, date, user_id).Scan(&appointments).Error; err != nil {
 		helpers.HandleError(response, http.StatusBadRequest, "Unable to fetch appointments", err)

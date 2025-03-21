@@ -112,6 +112,7 @@ begin;
         service_timing_id uuid not null references service_timings(id),
         appointment_date date not null,
         home_service_needed boolean not null default false,
+        home_reach_time time default null,
         start_time time not null,
         end_time time not null,
         status text not null default 'INITIATED' -- INITIATED, BOOKED, CANCELLED, ONGOING, COMPLETED

@@ -6,7 +6,6 @@ import (
 
 const TableNameAppointment = "appointments"
 
-// Appointment mapped from table <appointments>
 type Appointment struct {
 	ID                string    `gorm:"column:id;type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
 	CreatedAt         time.Time `gorm:"column:created_at;type:timestamp with time zone;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
@@ -19,9 +18,9 @@ type Appointment struct {
 	EndTime           string    `gorm:"column:end_time;type:time without time zone;not null" json:"end_time"`
 	Status            string    `gorm:"column:status;type:text;not null;default:INITIATED" json:"status"`
 	HomeServiceNeeded bool      `gorm:"column:home_service_needed;type:boolean;not null" json:"home_service_needed"`
+	HomeReachTime     *string   `gorm:"column:home_reach_time;type:time without time zone" json:"home_reach_time"`
 }
 
-// TableName Appointment's table name
 func (*Appointment) TableName() string {
 	return TableNameAppointment
 }

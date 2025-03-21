@@ -41,9 +41,10 @@ func GetPlatformUsers(response http.ResponseWriter, request *http.Request) {
 
 	// WHERE conditions - END
 
-	query = query + " WHERE " + strings.Join(query_conditions, " AND ")
+	query = query + " WHERE " + strings.Join(query_conditions, " AND ") + " ORDER BY a.verified_at ASC LIMIT ? OFFSET ? "
+	query_conditions_vars = append(query_conditions_vars, limit, page*limit)
 
-	if err := db.Raw(query, query_conditions_vars...).Limit(limit).Offset(page * limit).Scan(&users).Error; err != nil {
+	if err := db.Raw(query, query_conditions_vars...).Scan(&users).Error; err != nil {
 		helpers.HandleError(response, http.StatusInternalServerError, "Unable to get platform users", err)
 		return
 	}
@@ -116,14 +117,14 @@ func ApproveOrRejectEntrepreneur(response http.ResponseWriter, request *http.Req
 func GetPaymentClearanceEntrepreneurs(response http.ResponseWriter, request *http.Request) {
 	db := database.GetRlsContextDB(request)
 
-	query := `SELECT a.id, a.phone_number, u.name, MAX(lpc.updated_at) AS last_cleared_at, to_json(ba.*) AS bank_account
+	query := `SELECT a.id, a.phone_number, u.name, u.aadhar_number, u.pan_number, MAX(lpc.updated_at) AS last_cleared_at, to_json(ba.*) AS bank_account
 			FROM
 			users u
 			JOIN auth a ON a.id = u.id
 			LEFT JOIN bank_accounts ba ON ba.created_by = a.id
 			LEFT JOIN last_payment_cleared lpc ON lpc.entrepreneur_id = a.id  AND lpc.updated_at < current_date - interval '5 days'
 			WHERE a.user_type = ? AND u.verified = TRUE
-			GROUP BY a.id, ba.id, u.name ORDER BY last_cleared_at ASC;`
+			GROUP BY a.id, ba.id, u.name, u.aadhar_number, u.pan_number ORDER BY last_cleared_at ASC;`
 
 	var data []PaymentClearanceEntrepreneursDTO
 	if err := db.Raw(query, user_types.ENTREPRENEUR).Scan(&data).Error; err != nil {

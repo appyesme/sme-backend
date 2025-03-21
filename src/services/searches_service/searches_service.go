@@ -44,7 +44,7 @@ func SearchPosts(db *gorm.DB, searched_posts *[]post_service.GetPostsDto, search
 func SearchUsers(db *gorm.DB, searched_users *[]SearchedUsersDto, search_query string) error {
 	query := `SELECT u.id, u.photo_url, u.name
 	FROM users u LEFT JOIN auth a ON a.id = u.id
-	WHERE a.user_type = $1 AND u.verified AND (u.name ILIKE $2 OR $2 ILIKE ANY(u.expertises))
+	WHERE a.user_type = $1 AND u.verified AND (u.name ILIKE $2 OR EXISTS (SELECT 1 FROM unnest(u.expertises) AS expertise WHERE expertise ILIKE $2))
 	GROUP BY u.id, u.name
 	LIMIT 20;`
 

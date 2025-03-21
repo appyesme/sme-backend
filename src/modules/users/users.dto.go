@@ -17,6 +17,7 @@ type GetUserAppointmentsDto struct {
 	EndTime           string          `json:"end_time"`
 	Status            string          `json:"status"`
 	HomeServiceNeeded bool            `json:"home_service_needed"`
+	HomeReachTime     *string         `json:"home_reach_time"`
 	Candidate         json.RawMessage `json:"candidate"`
 	Service           json.RawMessage `json:"service"`
 	Payment           json.RawMessage `json:"payment"`

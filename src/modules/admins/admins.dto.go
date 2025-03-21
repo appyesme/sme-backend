@@ -9,6 +9,8 @@ import (
 type PaymentClearanceEntrepreneursDTO struct {
 	ID            string          `json:"id"`
 	PhoneNumber   string          `json:"phone_number"`
+	AadharNumber  string          `json:"aadhar_number"`
+	PanNumber     string          `json:"pan_number"`
 	Name          string          `json:"name"`
 	LastClearedAt *string         `gorm:"last_cleared_at" json:"last_cleared_at"`
 	BankAccount   json.RawMessage `gorm:"bank_account" json:"bank_account"`
