@@ -1,7 +1,6 @@
 package commissions_handler
 
 import (
-	"fmt"
 	"net/http"
 	"sme-backend/model"
 	"sme-backend/src/core/database"
@@ -27,7 +26,6 @@ func UpdateCommissonsDetails(response http.ResponseWriter, request *http.Request
 	var commisson model.Commission
 
 	if err := helpers.ParseBody(request, &commisson, false); err != nil {
-		fmt.Println("Err 0", err)
 		helpers.HandleError(response, http.StatusBadRequest, "Provide valid inputs", err)
 		return
 	}
@@ -42,15 +40,12 @@ func UpdateCommissonsDetails(response http.ResponseWriter, request *http.Request
 	defer tx.Rollback()
 
 	if err := db.Exec("DELETE FROM commissions").Error; err != nil {
-		fmt.Println("Err 1", err)
 		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong", err)
 		return
 	}
 
 	commisson.CreatedBy = requestor_id
 	if err := tx.Create(&commisson).Error; err != nil {
-		fmt.Println("Err 2", err)
-
 		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong", err)
 		return
 	}

@@ -40,7 +40,7 @@ func VerifyPaymentStatus(response http.ResponseWriter, request *http.Request) {
 	if booked_appointment.Status == appointment_status.BOOKED && payment.Status == payment_status.PAID {
 		payment_verification["status"] = payment_status.PAID
 	} else {
-		is_paid, err := razorpay_servce.VerifyPaymentByOrderID(payment.OrderID)
+		payment_id, is_paid, err := razorpay_servce.VerifyPaymentByOrderID(payment.OrderID)
 
 		if !is_paid {
 			payment_verification["status"] = payment_status.PENDING
@@ -65,7 +65,7 @@ func VerifyPaymentStatus(response http.ResponseWriter, request *http.Request) {
 				return
 			}
 
-			payment := model.Payment{Status: payment_status.PAID}
+			payment := model.Payment{Status: payment_status.PAID, PaymentID: payment_id}
 			if err := db.Where("appointment_id = ? AND created_by = ?", appointment_id, user_id).Updates(&payment).Error; err != nil {
 				helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong", err)
 				return
