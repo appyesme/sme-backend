@@ -2,6 +2,7 @@ package appointments_handler
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"sme-backend/model"
 	"sme-backend/src/core/database"
@@ -10,6 +11,7 @@ import (
 	"sme-backend/src/enums/payment_status"
 	"sme-backend/src/enums/user_types"
 	"sme-backend/src/services/appointments_service"
+	"sme-backend/src/services/notification_service"
 	"sme-backend/src/services/razorpay_servce"
 	"strings"
 )
@@ -152,7 +154,19 @@ func AccpetAppointment(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	helpers.HandleSuccess(response, http.StatusOK, "Appointment completed", appointment)
+	// TO user
+	user_body := fmt.Sprintf("Your appointment accpeted.")
+	user_notification := model.Notification{
+		UserID: appointment.CreatedBy,
+		Title:  "Appointment accepted",
+		Body:   user_body,
+		// Actions: *helpers.ToRawMessage(actions),
+	}
+
+	notifications := []*model.Notification{&user_notification}
+	notification_service.CreateNotificaton(db, notifications)
+
+	helpers.HandleSuccess(response, http.StatusOK, "Appointment accpeted", appointment)
 }
 
 func RejectAppointment(response http.ResponseWriter, request *http.Request) {
@@ -176,7 +190,7 @@ func RejectAppointment(response http.ResponseWriter, request *http.Request) {
 
 	var appointment model.Appointment
 	if err := tx.Where("id = ?", appointment_id).First(&appointment).Error; err != nil {
-		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment", err)
+		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment(1)", err)
 		return
 	}
 
@@ -189,7 +203,7 @@ func RejectAppointment(response http.ResponseWriter, request *http.Request) {
 	// Check payment is made
 	var payment model.Payment
 	if err := tx.Where("appointment_id = ? AND created_by = ?", appointment_id, appointment.CreatedBy).First(&payment).Error; err != nil {
-		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment", err)
+		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment(2)", err)
 		return
 	}
 
@@ -209,26 +223,38 @@ func RejectAppointment(response http.ResponseWriter, request *http.Request) {
 
 	appointment.Status = appointment_status.REJECTED
 	if err := tx.Where("id = ?", appointment_id).Updates(&appointment).Error; err != nil {
-		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment", err)
+		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment(3)", err)
 		return
 	}
 
 	// Initiate refund
 	refund_response, err := razorpay_servce.InitiatedInstantPaymentRefund(payment)
 	if err != nil {
-		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment", err)
+		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment(4)", err)
 		return
 	}
 
 	payment.Status = refund_response.PaymentStatus
 	payment.RefundID = refund_response.RefundID
 	if err := tx.Where("id = ?", payment.ID).Updates(&payment).Error; err != nil {
-		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment", err)
+		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment(5)", err)
 		return
 	}
 
+	// TO user
+	user_body := fmt.Sprintf("Your recent appointment was rejected and refund initiated. You'll get a notification once the refund is completed.")
+	user_notification := model.Notification{
+		UserID: appointment.CreatedBy,
+		Title:  "Refund initiated",
+		Body:   user_body,
+		// Actions: *helpers.ToRawMessage(actions),
+	}
+
+	notifications := []*model.Notification{&user_notification}
+	notification_service.CreateNotificaton(tx, notifications)
+
 	if err := tx.Commit().Error; err != nil {
-		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment", err)
+		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment(6)", err)
 		return
 	}
 
@@ -310,13 +336,13 @@ func GetAppointmentsEnabledDayTimings(response http.ResponseWriter, request *htt
 				left join (
 					select service_timing_id, count(id) as appointment_count
 					from appointments
-					where appointment_date = ?
+					where appointment_date = ? AND status = ?
 					group by service_timing_id
 				) ap on ap.service_timing_id = st.id
 			where st.service_day_id = ? and st.enabled and coalesce(ap.appointment_count, 0) < st.people_per_slot
 			group by st.id, ap.appointment_count;`
 
-	if err := db.Raw(query, date, service_day_id).Scan(&services_day_timings).Error; err != nil {
+	if err := db.Raw(query, date, appointment_status.BOOKED, service_day_id).Scan(&services_day_timings).Error; err != nil {
 		helpers.HandleError(response, http.StatusInternalServerError, "Unable to get service day timings", err)
 		return
 	}
