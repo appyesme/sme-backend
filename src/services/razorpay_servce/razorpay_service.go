@@ -62,11 +62,13 @@ func InitiatedInstantPaymentRefund(payment model.Payment) (RefundResponse, error
 	// RazorPay Refund Possible Statuses: "pending", "processed", "failed"
 	refund_response_payload, err := razorpay_client.Payment.Refund(payment.PaymentID, int(payment.Amount), data, nil)
 	if err != nil {
+		fmt.Println("err (1): ", err)
 		return refund_response, err
 	}
 
 	payment_status, err := razorpay_refund_status.GetPaymentStatusBasedRazorpayRefundStatus(refund_response_payload["status"].(string))
 	if err != nil {
+		fmt.Println("err (2): ", err)
 		return refund_response, err
 	}
 

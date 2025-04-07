@@ -73,8 +73,8 @@ func SetupRoutes(app *chi.Mux) {
 		router.Route("/appointments", func(router chi.Router) {
 			router.With(middlewares.Protected).Get("/price", appointments_handler.GetAppointmentPrice)
 			router.With(middlewares.Protected).Post("/book", appointments_handler.BookAppointment)
-			router.With(middlewares.Protected).Put("/{appointment_id}/accept", appointments_handler.MarkAsCompleted)
-			router.With(middlewares.Protected).Put("/{appointment_id}/reject", appointments_handler.MarkAsCompleted)
+			router.With(middlewares.Protected).Put("/{appointment_id}/accept", appointments_handler.AccpetAppointment)
+			router.With(middlewares.Protected).Put("/{appointment_id}/reject", appointments_handler.RejectAppointment)
 			router.With(middlewares.Protected).Post("/{appointment_id}/completed", appointments_handler.MarkAsCompleted)
 			router.With(middlewares.PartiallyProtected).Get("/available-days", appointments_handler.GetAppointmentsEnabledDays)
 			router.With(middlewares.PartiallyProtected).Get("/available-timings", appointments_handler.GetAppointmentsEnabledDayTimings)

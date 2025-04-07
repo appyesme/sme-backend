@@ -130,7 +130,7 @@ begin;
         order_id varchar(255),
         payment_id varchar(255),
         refund_id varchar(255),
-        status varchar(50) not null, -- PENDING, PAID, CANCELLED, REFUND_INITIATED, REFUND_SETTLED, REFUND_FAILED
+        status varchar(50) not null,
 
         unique(appointment_id, created_by)
     );

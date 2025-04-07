@@ -104,6 +104,7 @@ func UpdateAppointmentBookedPaymentStatus(db *gorm.DB, payment_payload webhook_s
 }
 
 func UpdateAppointmentRefundPaymentStatus(db *gorm.DB, refund_response webhook_service.RzpWebhookRefundReponse) error {
+	fmt.Println("REUNFD WEBHOOK CALLED")
 	var payment model.Payment
 
 	appointment_id := refund_response.Notes.AppointmentID
