@@ -158,6 +158,11 @@ func UpdateAppointmentRefundPaymentStatus(db *gorm.DB, refund_response webhook_s
 
 		notifications := []*model.Notification{&entrepreneur_notification, &user_notification}
 		notification_service.CreateNotificaton(db, notifications)
+	} else if refund_response.Status == razorpay_refund_status.FAILED {
+		payment.Status = payment_status.REFUND_FAILED
+		if err := db.Where("id = ?", payment.ID).Updates(&payment).Error; err != nil {
+			return err
+		}
 	}
 
 	return nil
