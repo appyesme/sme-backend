@@ -26,15 +26,31 @@ func CreateRazorPayOrderForServicePrice(registration_fees float64, service_id, a
 	return razorpay_client.Order.Create(order, nil)
 }
 
-func VerifyPaymentByOrderID(order_id string) (bool, error) {
+func VerifyPaymentByOrderID(order_id string) (string, bool, error) {
+	var order_details map[string]any
+	var payment_id string
 	razorpay_client := razorpay.NewClient(config.Config("RAZORPAY_KEY_ID"), config.Config("RAZORPAY_SECRET_KEY"))
 	// Fetch all payments related to the order_id
 	order_details, err := razorpay_client.Order.Fetch(order_id, nil, nil)
 	if err != nil {
-		return false, errors.New("failed to verify payment")
+		return payment_id, false, errors.New("failed to verify payment")
 	}
 
-	return order_details["status"] == "paid", nil
+	payment_details, err := razorpay_client.Order.Payments(order_id, nil, nil)
+	if err != nil {
+		return payment_id, false, errors.New("failed to verify payment")
+	}
+
+	// Get paymeny id
+	payments, ok := payment_details["items"].([]any)
+	if !ok || len(payments) == 0 {
+		return payment_id, false, errors.New("failed to verify payment")
+	} else {
+		payment := payments[0].(map[string]any)
+		payment_id = payment["id"].(string)
+	}
+
+	return payment_id, order_details["status"] == "paid", nil
 }
 
 type RefundResponse struct {
@@ -62,13 +78,11 @@ func InitiatedInstantPaymentRefund(payment model.Payment) (RefundResponse, error
 	// RazorPay Refund Possible Statuses: "pending", "processed", "failed"
 	refund_response_payload, err := razorpay_client.Payment.Refund(payment.PaymentID, int(payment.Amount), data, nil)
 	if err != nil {
-		fmt.Println("err (1): ", err)
 		return refund_response, err
 	}
 
 	payment_status, err := razorpay_refund_status.GetPaymentStatusBasedRazorpayRefundStatus(refund_response_payload["status"].(string))
 	if err != nil {
-		fmt.Println("err (2): ", err)
 		return refund_response, err
 	}
 
