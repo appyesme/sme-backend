@@ -194,7 +194,7 @@ func MarkAsPaymentCleared(response http.ResponseWriter, request *http.Request) {
 
 	defer tx.Rollback()
 
-	if err := tx.Model(&model.Payment{}).Where("id IN (?)", payload_ids).Update("status", payment_status.CLEARED).Error; err != nil {
+	if err := tx.Model(&model.Payment{}).Where("id IN (?)", payload_ids).Update("status", payment_status.SETTLED).Error; err != nil {
 		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong", err)
 		return
 	}

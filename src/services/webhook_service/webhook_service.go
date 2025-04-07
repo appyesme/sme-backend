@@ -25,6 +25,20 @@ type RazorpayWebhookPayload struct {
 	}
 }
 
+type RzpWebhookRefundReponse struct {
+	ID        string `json:"id"`
+	Entity    string `json:"entity"`
+	PaymentID string `json:"payment_id"`
+	Status    string `json:"status"` // "pending", "processed", "failed"
+	Notes     struct {
+		AppointmentID string `json:"appointment_id"`
+		PaymentId     string `json:"payment_id"`
+		OrderID       string `json:"order_id"`
+		ServiceID     string `json:"service_id"`
+		CreatedBy     string `json:"created_by"`
+	} `json:"notes"`
+}
+
 func VerifyRazorpayWebhookSignature(webhook_body []byte, webhook_signature string) bool {
 	// Create HMAC-SHA256 hash using the Razorpay Webhook Secret
 	h := hmac.New(sha256.New, []byte(config.Config("RAZORPAY_WEBHOOK_SECRET")))

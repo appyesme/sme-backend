@@ -42,7 +42,7 @@ func SetupRoutes(app *chi.Mux) {
 	})
 
 	// V1 API version
-	app.Route(fmt.Sprintf("/%s", version.V1_API_VERSION), func(router chi.Router) {
+	app.Route(fmt.Sprintf("/%s", version.API_VERSION_V1), func(router chi.Router) {
 		router.Route("/admin", func(router chi.Router) {
 			router.With(middlewares.PartiallyProtected).Post("/signin", auth_handler.AdminSignIn)
 			router.With(middlewares.AdminProtected).Get("/users", admins_handler.GetPlatformUsers)
@@ -73,6 +73,8 @@ func SetupRoutes(app *chi.Mux) {
 		router.Route("/appointments", func(router chi.Router) {
 			router.With(middlewares.Protected).Get("/price", appointments_handler.GetAppointmentPrice)
 			router.With(middlewares.Protected).Post("/book", appointments_handler.BookAppointment)
+			router.With(middlewares.Protected).Put("/{appointment_id}/accept", appointments_handler.MarkAsCompleted)
+			router.With(middlewares.Protected).Put("/{appointment_id}/reject", appointments_handler.MarkAsCompleted)
 			router.With(middlewares.Protected).Post("/{appointment_id}/completed", appointments_handler.MarkAsCompleted)
 			router.With(middlewares.PartiallyProtected).Get("/available-days", appointments_handler.GetAppointmentsEnabledDays)
 			router.With(middlewares.PartiallyProtected).Get("/available-timings", appointments_handler.GetAppointmentsEnabledDayTimings)
@@ -140,6 +142,7 @@ func SetupRoutes(app *chi.Mux) {
 
 		router.With(middlewares.PartiallyProtected).Route("/webhooks", func(router chi.Router) {
 			router.Post("/payment/razorpay", webhooks.RozarPayVerifyPayment)
+			router.Post("/payment/razorpay/refund/status", webhooks.RazorpayRefundStatusListenerWebhook)
 		})
 	})
 }
