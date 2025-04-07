@@ -7,6 +7,7 @@ import (
 	"sme-backend/model"
 	"sme-backend/src/core/database"
 	"sme-backend/src/core/helpers"
+	"sme-backend/src/enums/appointment_status"
 	"sme-backend/src/enums/user_types"
 	file_upload_service "sme-backend/src/services/upload_service"
 
@@ -68,11 +69,11 @@ func GetEntrepreneurAppointments(response http.ResponseWriter, request *http.Req
 				from
 					appointments ap
 					join services s on s.id = ap.service_id
-					left join payments p on p.appointment_id = ap.id AND ap.status = 'INITIATED'
+					left join payments p on p.appointment_id = ap.id AND ap.status = ?
 				where ap.date = ? AND s.created_by = ?
 				group by ap.id`
 
-	if err := db.Raw(query, date, user_id).Scan(&appointments).Error; err != nil {
+	if err := db.Raw(query, appointment_status.INITIATED, date, user_id).Scan(&appointments).Error; err != nil {
 		helpers.HandleError(response, http.StatusBadRequest, "Unable to fetch appointments", err)
 		return
 	}

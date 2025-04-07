@@ -1,6 +1,7 @@
 **/*.env
+**/*.env.dev
+**/*.env.prod
 /vendor/
-buddy-api
 **/*.cer
 /tmp
 .DS_Store

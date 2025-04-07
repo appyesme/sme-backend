@@ -17,6 +17,7 @@ type Payment struct {
 	Currency      string    `gorm:"column:currency;type:character varying(10);default:INR" json:"currency"`
 	OrderID       string    `gorm:"column:order_id;type:character varying(255)" json:"order_id"`
 	PaymentID     string    `gorm:"column:payment_id;type:character varying(255)" json:"payment_id"`
+	RefundID      string    `gorm:"column:refund_id;type:character varying(255)" json:"refund_id"`
 	Status        string    `gorm:"column:status;type:character varying(50);not null" json:"status"`
 	ServiceID     string    `gorm:"column:service_id;type:uuid;not null" json:"service_id"`
 }

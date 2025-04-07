@@ -125,11 +125,12 @@ begin;
         created_by uuid not null references users(id),
         service_id uuid not null references services(id),
         appointment_id uuid not null references appointments(id),
-        amount numeric(10, 2) not null,
+        amount numeric(10, 2) not null, -- in paise
         currency varchar(10) default 'INR',
         order_id varchar(255),
         payment_id varchar(255),
-        status varchar(50) not null, -- PENDING, PAID, CANCELLED, REFUNDED
+        refund_id varchar(255),
+        status varchar(50) not null, -- PENDING, PAID, CANCELLED, REFUND_INITIATED, REFUND_SETTLED, REFUND_FAILED
 
         unique(appointment_id, created_by)
     );

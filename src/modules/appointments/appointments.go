@@ -119,23 +119,152 @@ func BookAppointment(response http.ResponseWriter, request *http.Request) {
 	helpers.HandleSuccess(response, http.StatusCreated, "Appointment booking initiated", resp)
 }
 
+func AccpetAppointment(response http.ResponseWriter, request *http.Request) {
+	db := database.GetRlsContextDB(request)
+	user_type := helpers.GetUserType(request)
+	appointment_id := helpers.GetUrlParam(request, "appointment_id")
+
+	if user_type == user_types.USER {
+		err_msg := "You're not authorized to this action"
+		helpers.HandleError(response, http.StatusBadRequest, err_msg, errors.New("invalid request"))
+		return
+	}
+
+	var appointment model.Appointment
+	if err := db.Where("id = ?", appointment_id).First(&appointment).Error; err != nil {
+		helpers.HandleError(response, http.StatusInternalServerError, "Unable to fetch appointment", err)
+		return
+	}
+
+	if appointment.Status == appointment_status.ACCEPTED {
+		err_msg := "Appointment already accepted"
+		helpers.HandleError(response, http.StatusBadRequest, err_msg, errors.New(strings.ToLower(err_msg)))
+		return
+	} else if appointment.Status != appointment_status.BOOKED {
+		err_msg := "Appointment is not booked or invalid request"
+		helpers.HandleError(response, http.StatusBadRequest, err_msg, errors.New(strings.ToLower(err_msg)))
+		return
+	}
+
+	appointment.Status = appointment_status.ACCEPTED
+	if err := db.Where("id = ?", appointment_id).Updates(&appointment).Error; err != nil {
+		helpers.HandleError(response, http.StatusInternalServerError, "Unable to complete appointment", err)
+		return
+	}
+
+	helpers.HandleSuccess(response, http.StatusOK, "Appointment completed", appointment)
+}
+
+func RejectAppointment(response http.ResponseWriter, request *http.Request) {
+	db := database.GetRlsContextDB(request)
+	user_type := helpers.GetUserType(request)
+	appointment_id := helpers.GetUrlParam(request, "appointment_id")
+
+	if user_type == user_types.USER {
+		err_msg := "You're not authorized to this action"
+		helpers.HandleError(response, http.StatusBadRequest, err_msg, errors.New("invalid request"))
+		return
+	}
+
+	tx := db.Begin()
+	if err := tx.Error; err != nil {
+		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong", err)
+		return
+	}
+
+	defer tx.Rollback()
+
+	var appointment model.Appointment
+	if err := tx.Where("id = ?", appointment_id).First(&appointment).Error; err != nil {
+		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment", err)
+		return
+	}
+
+	if appointment.Status != appointment_status.BOOKED {
+		err_msg := "Appointment is not booked"
+		helpers.HandleError(response, http.StatusBadRequest, err_msg, errors.New(strings.ToLower(err_msg)))
+		return
+	}
+
+	// Check payment is made
+	var payment model.Payment
+	if err := tx.Where("appointment_id = ? AND created_by = ?", appointment_id, appointment.CreatedBy).First(&payment).Error; err != nil {
+		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment", err)
+		return
+	}
+
+	if payment.Status == payment_status.REFUND_INITIATED {
+		err_msg := "Refund is already initiated. Refund will take 5-7 business days to settle."
+		helpers.HandleError(response, http.StatusBadRequest, err_msg, errors.New(strings.ToLower(err_msg)))
+		return
+	} else if payment.Status == payment_status.REFUND_SETTLED {
+		err_msg := "Refund is already settled."
+		helpers.HandleError(response, http.StatusBadRequest, err_msg, errors.New(strings.ToLower(err_msg)))
+		return
+	} else if payment.Status != payment_status.PAID {
+		err_msg := "Payment is not made or refund is not initiated or contact support team."
+		helpers.HandleError(response, http.StatusBadRequest, err_msg, errors.New(strings.ToLower(err_msg)))
+		return
+	}
+
+	appointment.Status = appointment_status.REJECTED
+	if err := tx.Where("id = ?", appointment_id).Updates(&appointment).Error; err != nil {
+		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment", err)
+		return
+	}
+
+	// Initiate refund
+	refund_response, err := razorpay_servce.InitiatedInstantPaymentRefund(payment)
+	if err != nil {
+		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment", err)
+		return
+	}
+
+	payment.Status = refund_response.PaymentStatus
+	payment.RefundID = refund_response.RefundID
+	if err := tx.Where("id = ?", payment.ID).Updates(&payment).Error; err != nil {
+		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment", err)
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		helpers.HandleError(response, http.StatusInternalServerError, "Something went wrong while rejecting appointment", err)
+		return
+	}
+
+	helpers.HandleSuccess(response, http.StatusOK, "Appointment amount refund initiated", appointment)
+}
+
 func MarkAsCompleted(response http.ResponseWriter, request *http.Request) {
 	db := database.GetRlsContextDB(request)
 	user_type := helpers.GetUserType(request)
 	appointment_id := helpers.GetUrlParam(request, "appointment_id")
 
 	if user_type == user_types.USER {
-		helpers.HandleError(response, http.StatusBadRequest, "Something is wrong", errors.New("invalid request"))
+		err_msg := "You're not authorized to this action"
+		helpers.HandleError(response, http.StatusBadRequest, err_msg, errors.New("invalid request"))
 		return
 	}
 
-	appointment := map[string]any{"status": appointment_status.COMPLETED}
-	if err := db.Model(model.Appointment{}).Where("id = ?", appointment_id).Updates(&appointment).Error; err != nil {
+	var appointment model.Appointment
+	if err := db.Where("id = ?", appointment_id).First(&appointment).Error; err != nil {
+		helpers.HandleError(response, http.StatusInternalServerError, "Unable to fetch appointment", err)
+		return
+	}
+
+	if appointment.Status != appointment_status.ACCEPTED {
+		err_msg := "Appointment is not accepted or booked"
+		helpers.HandleError(response, http.StatusBadRequest, err_msg, errors.New(strings.ToLower(err_msg)))
+		return
+	}
+
+	appointment.Status = appointment_status.COMPLETED
+	if err := db.Where("id = ?", appointment_id).Updates(&appointment).Error; err != nil {
 		helpers.HandleError(response, http.StatusInternalServerError, "Unable to complete appointment", err)
 		return
 	}
 
-	helpers.HandleSuccess(response, http.StatusOK, "Appointment booking initiated", appointment)
+	helpers.HandleSuccess(response, http.StatusOK, "Appointment completed", appointment)
 }
 
 func GetAppointmentsEnabledDays(response http.ResponseWriter, request *http.Request) {
