@@ -19,6 +19,7 @@ type Appointment struct {
 	Status            string    `gorm:"column:status;type:text;not null;default:INITIATED" json:"status"`
 	HomeServiceNeeded bool      `gorm:"column:home_service_needed;type:boolean;not null" json:"home_service_needed"`
 	HomeReachTime     *string   `gorm:"column:home_reach_time;type:time without time zone" json:"home_reach_time"`
+	HomeAddress       *string   `gorm:"column:home_address;type:text" json:"home_address"`
 }
 
 func (*Appointment) TableName() string {
