@@ -113,6 +113,7 @@ begin;
         appointment_date date not null,
         home_service_needed boolean not null default false,
         home_reach_time time default null,
+        home_address text default null,
         start_time time not null,
         end_time time not null,
         status text not null default 'INITIATED' -- INITIATED, BOOKED, CANCELLED, ONGOING, COMPLETED
